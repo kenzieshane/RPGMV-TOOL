@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPG Maker MV Sprite Cropper and Positioner</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<nav class="site-nav" data-tool-nav></nav>
+<div class="rpg-tool">
+    <div class="tool-header">
+        <h1>RPG Maker MV Sprite Cropper and Positioner</h1>
+        <p>Adjust sprite offsets inside their original frame and export transparent PNG output.</p>
+    </div>
+
+    <div class="workspace">
+        <div class="control-panel">
+            <div class="panel-header">Sprite Library</div>
+            <div class="panel-content">
+                <div class="upload-area">
+                    <label class="upload-label">
+                        Load Sprite Files
+                        <input type="file" id="spriteUpload" accept="image/png,image/webp,image/jpeg" multiple>
+                    </label>
+                    <div class="rpg-hint">PNG with transparency is recommended.</div>
+                </div>
+
+                <div id="spriteListContainer" class="sprite-list">
+                    <div class="rpg-hint" style="padding:20px;">No sprites loaded.</div>
+                </div>
+
+                <div class="position-controls">
+                    <div class="control-group">
+                        <label>X Offset</label>
+                        <div class="slider-container">
+                            <input type="range" id="offsetXSlider" min="-200" max="200" value="0" step="1">
+                            <input type="number" id="offsetXInput" class="coord-input" value="0">
+                            <button id="resetXBtn" class="reset-btn">Reset</button>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Y Offset</label>
+                        <div class="slider-container">
+                            <input type="range" id="offsetYSlider" min="-200" max="200" value="0" step="1">
+                            <input type="number" id="offsetYInput" class="coord-input" value="0">
+                            <button id="resetYBtn" class="reset-btn">Reset</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="transform-info">
+                    <p>Current: <span id="currentSpriteName">-</span></p>
+                    <p>Original size: <span id="origSize">-</span></p>
+                    <p>Offset: <span id="offsetDisplay">X:0, Y:0</span></p>
+                    <p>Output size: <span id="outputSize">-</span> (same as original)</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="canvas-panel">
+            <div class="panel-header">Preview and Export</div>
+            <div class="panel-content">
+                <div class="canvas-container">
+                    <div class="canvas-wrapper">
+                        <canvas id="previewCanvas" width="400" height="400"></canvas>
+                    </div>
+                    <div class="action-buttons">
+                        <button id="zoomInBtn" class="rpg-btn">Zoom In</button>
+                        <button id="zoomOutBtn" class="rpg-btn">Zoom Out</button>
+                        <button id="resetViewBtn" class="rpg-btn">Reset View</button>
+                        <button id="exportBtn" class="rpg-btn rpg-btn-primary">Export PNG</button>
+                        <button id="exportAllBtn" class="rpg-btn rpg-btn-success">Export All</button>
+                    </div>
+                    <div class="tip-card">Drag on the canvas to pan. Use mouse wheel or zoom buttons to scale.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<footer class="site-footer" data-site-footer></footer>
+
+<script src="nav.js"></script>
+<script src="sprite-pos.js"></script>
+<script src="footer.js"></script>
+</body>
+</html>

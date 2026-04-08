@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPG Maker MV Sprite Forge</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<nav class="site-nav" data-tool-nav></nav>
+<div class="rpg-app">
+    <div class="rpg-header">
+        <h1>RPG Maker MV Sprite Forge</h1>
+        <div class="rpg-subhead">Import sprites, arrange them on a 9x6 board, and export transparent PNG sheets.</div>
+    </div>
+
+    <div class="rpg-workspace">
+        <div class="rpg-panel">
+            <div class="rpg-panel-header">Sprite Library</div>
+            <div class="rpg-panel-content">
+                <div class="rpg-upload">
+                    <label class="rpg-upload-label">
+                        Add Sprites
+                        <input type="file" id="spriteUpload" accept="image/png,image/jpeg,image/webp,image/gif" multiple>
+                    </label>
+                    <div class="rpg-hint">Use clear names such as 00.png, 01.png, and 10.png for reliable import matching.</div>
+                </div>
+
+                <div class="rpg-stats">
+                    <span>Sprite Pool</span>
+                    <span id="poolCount" class="stats-accent">0 items</span>
+                </div>
+
+                <div id="spritePoolContainer" class="sprite-pool">
+                    <div class="rpg-hint" style="width:100%; padding:20px;">No sprites loaded yet.</div>
+                </div>
+
+                <div class="form-row" style="margin: 12px 0;">
+                    <button id="demoSpritesBtn" class="rpg-btn rpg-btn-primary" style="flex:1;">Load Demo</button>
+                    <button id="clearPoolBtn" class="rpg-btn rpg-btn-danger" style="flex:1;">Clear All</button>
+                </div>
+
+                <div class="import-export-row">
+                    <div class="rpg-stats" style="margin-bottom: 8px;">
+                        <span>Layout Transfer</span>
+                        <span class="stats-accent">JSON</span>
+                    </div>
+                    <div class="form-row">
+                        <label class="rpg-btn link-button">
+                            Import JSON
+                            <input type="file" id="importLayoutJson" accept="application/json">
+                        </label>
+                        <button id="exportLayoutBtn" class="rpg-btn">Export JSON</button>
+                    </div>
+                    <div class="rpg-hint muted-note">
+                        Tip: Import restores positions by matching the file name first, then sprite ID.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="rpg-panel-right">
+            <div class="rpg-panel-header">9x6 Placement Grid</div>
+            <div class="rpg-panel-content">
+                <div id="rpgGridContainer" class="rpg-grid"></div>
+
+                <div class="rpg-actions">
+                    <div class="form-row">
+                        <button id="clearGridBtn" class="rpg-btn rpg-btn-danger">Clear Grid</button>
+                        <button id="resetGridOnlyBtn" class="rpg-btn">Reset Grid</button>
+                    </div>
+                    <div>
+                        <button id="exportCleanPngBtn" class="rpg-btn rpg-btn-primary">Export Transparent PNG</button>
+                    </div>
+                </div>
+                <div class="rpg-hint">Drag sprites from the library into the grid cells.</div>
+            </div>
+        </div>
+    </div>
+</div>
+<footer class="site-footer" data-site-footer></footer>
+
+<script src="nav.js"></script>
+<script src="index.js"></script>
+<script src="footer.js"></script>
+</body>
+</html>
