@@ -1,9 +1,56 @@
-const COLS = 9;
-const ROWS = 6;
-let gridData = Array(ROWS)
-  .fill()
-  .map(() => Array(COLS).fill(null));
+const LAYOUT_MODES = {
+  full: { cols: 9, rows: 6, label: "9x6 Placement Grid", toastLabel: "Full 9x6 layout" },
+  walk3x4: {
+    cols: 3,
+    rows: 4,
+    label: "3x4 Character Walk Grid",
+    toastLabel: "Character Walk 3x4 layout"
+  }
+};
+const STORAGE_KEY = "rpg_sprite_forge_v3";
+const LEGACY_STORAGE_KEY = "rpg_sprite_forge_v2";
+let activeLayoutMode = "full";
+let gridStates = Object.fromEntries(
+  Object.entries(LAYOUT_MODES).map(([mode, config]) => [mode, createEmptyGrid(config.rows, config.cols)])
+);
+let gridData = gridStates[activeLayoutMode];
 let spritePool = [];
+
+function createEmptyGrid(rows, cols) {
+  return Array(rows)
+    .fill()
+    .map(() => Array(cols).fill(null));
+}
+
+function getLayoutConfig(mode = activeLayoutMode) {
+  return LAYOUT_MODES[mode] || LAYOUT_MODES.full;
+}
+
+function getActiveGrid() {
+  return gridStates[activeLayoutMode];
+}
+
+function setActiveGrid(nextMode) {
+  if (!LAYOUT_MODES[nextMode]) return;
+  if (!gridStates[nextMode]) {
+    const { rows, cols } = getLayoutConfig(nextMode);
+    gridStates[nextMode] = createEmptyGrid(rows, cols);
+  }
+  activeLayoutMode = nextMode;
+  gridData = gridStates[activeLayoutMode];
+}
+
+function updateGridHeader() {
+  const header = document.getElementById("gridPanelHeader");
+  if (header) header.textContent = getLayoutConfig().label;
+}
+
+function updateModeSelect() {
+  const select = document.getElementById("layoutModeSelect");
+  if (select && select.value !== activeLayoutMode) {
+    select.value = activeLayoutMode;
+  }
+}
 
 function genId() {
   return "rpg_" + Date.now() + "_" + Math.random().toString(36).substr(2, 8);
@@ -19,10 +66,14 @@ function getBaseFilename(filename) {
 function renderGrid() {
   const container = document.getElementById("rpgGridContainer");
   if (!container) return;
+  const { rows, cols } = getLayoutConfig();
+  const currentGrid = getActiveGrid();
+  container.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+  container.style.gridTemplateRows = `repeat(${rows}, 72px)`;
   container.innerHTML = "";
-  for (let row = 0; row < ROWS; row++) {
-    for (let col = 0; col < COLS; col++) {
-      const cellData = gridData[row][col];
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const cellData = currentGrid[row][col];
       const cell = document.createElement("div");
       cell.className = "rpg-grid-cell";
       cell.setAttribute("data-row", row);
@@ -45,7 +96,7 @@ function renderGrid() {
         removeBtn.innerHTML = "x";
         removeBtn.addEventListener("click", (e) => {
           e.stopPropagation();
-          gridData[row][col] = null;
+          currentGrid[row][col] = null;
           renderGrid();
           saveToLocal();
         });
@@ -72,7 +123,8 @@ function handleGridDrop(e) {
   if (!draggedId) return;
   const sourceSprite = spritePool.find((s) => s.id === draggedId);
   if (!sourceSprite) return;
-  gridData[row][col] = { id: sourceSprite.id, src: sourceSprite.src };
+  const currentGrid = getActiveGrid();
+  currentGrid[row][col] = { id: sourceSprite.id, src: sourceSprite.src };
   renderGrid();
   saveToLocal();
 }
@@ -119,11 +171,13 @@ function removeSpriteFromPool(spriteId) {
   const idx = spritePool.findIndex((s) => s.id === spriteId);
   if (idx !== -1) spritePool.splice(idx, 1);
   let changed = false;
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      if (gridData[r][c] && gridData[r][c].id === spriteId) {
-        gridData[r][c] = null;
-        changed = true;
+  for (const grid of Object.values(gridStates)) {
+    for (let r = 0; r < grid.length; r++) {
+      for (let c = 0; c < grid[r].length; c++) {
+        if (grid[r][c] && grid[r][c].id === spriteId) {
+          grid[r][c] = null;
+          changed = true;
+        }
       }
     }
   }
@@ -163,15 +217,19 @@ function importLayoutJSON(file) {
         throw new Error("Invalid format");
       }
 
-      const newGrid = Array(ROWS)
-        .fill()
-        .map(() => Array(COLS).fill(null));
+      const dimensions = layout.dimensions || {};
+      const targetMode =
+        layout.mode ||
+        Object.entries(LAYOUT_MODES).find(([, config]) => config.rows === dimensions.rows && config.cols === dimensions.cols)?.[0] ||
+        activeLayoutMode;
+      const { rows, cols } = getLayoutConfig(targetMode);
+      const newGrid = createEmptyGrid(rows, cols);
       let matched = 0;
       const unmatched = [];
 
       for (const assign of layout.assignments) {
         const { row, col, imageIdentifier, imageId } = assign;
-        if (row >= 0 && row < ROWS && col >= 0 && col < COLS) {
+        if (row >= 0 && row < rows && col >= 0 && col < cols) {
           let foundSprite = null;
 
           if (imageIdentifier && !foundSprite) {
@@ -201,7 +259,8 @@ function importLayoutJSON(file) {
       }
 
       if (matched > 0) {
-        gridData = newGrid;
+        gridStates[targetMode] = newGrid;
+        setActiveGrid(targetMode);
         renderGrid();
         saveToLocal();
       }
@@ -238,9 +297,8 @@ async function exportCleanSpriteSheet() {
   const gridStyle = window.getComputedStyle(gridElem);
   const gap = parseInt(gridStyle.gap, 10) || 8;
 
-  const exportPreset = document.getElementById("exportSizePreset")?.value || "full";
-  const exportCols = exportPreset === "walk3x4" ? 3 : COLS;
-  const exportRows = exportPreset === "walk3x4" ? 4 : ROWS;
+  const { rows: exportRows, cols: exportCols } = getLayoutConfig();
+  const exportPreset = activeLayoutMode;
 
   const totalW = exportCols * cellWidth + (exportCols - 1) * gap;
   const totalH = exportRows * cellHeight + (exportRows - 1) * gap;
@@ -250,11 +308,12 @@ async function exportCleanSpriteSheet() {
   canvas.height = totalH;
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, totalW, totalH);
+  const currentGrid = getActiveGrid();
 
   const drawPromises = [];
   for (let row = 0; row < exportRows; row++) {
     for (let col = 0; col < exportCols; col++) {
-      const cellEntry = gridData[row][col];
+      const cellEntry = currentGrid[row][col];
       if (cellEntry && cellEntry.src) {
         const x = col * (cellWidth + gap);
         const y = row * (cellHeight + gap);
@@ -296,24 +355,23 @@ async function exportCleanSpriteSheet() {
   link.download = `rpg_sprite_sheet_${exportLabel}_${timestamp}.png`;
   link.href = canvas.toDataURL("image/png");
   link.click();
-  if (exportPreset === "walk3x4") {
-    showToast("Exported Character Walk 3x4 PNG", "#2f8a68");
-  } else {
-    showToast("Exported Full 9x6 PNG", "#2f8a68");
-  }
+  showToast(`Exported ${getLayoutConfig().toastLabel}`, "#2f8a68");
 }
 
 function exportLayoutJSON() {
+  const { rows, cols } = getLayoutConfig();
+  const currentGrid = getActiveGrid();
   const exportObj = {
     version: "1.0",
     theme: "RPG Maker MV Sprite Forge",
-    dimensions: { rows: ROWS, cols: COLS },
+    mode: activeLayoutMode,
+    dimensions: { rows, cols },
     createdAt: new Date().toISOString(),
     assignments: []
   };
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      const cell = gridData[r][c];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cell = currentGrid[r][c];
       if (cell && cell.src) {
         const match = spritePool.find((s) => s.id === cell.id);
         exportObj.assignments.push({
@@ -386,14 +444,15 @@ function loadDemoSprites() {
 }
 
 function clearGrid() {
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      gridData[r][c] = null;
+  const currentGrid = getActiveGrid();
+  for (let r = 0; r < currentGrid.length; r++) {
+    for (let c = 0; c < currentGrid[r].length; c++) {
+      currentGrid[r][c] = null;
     }
   }
   renderGrid();
   saveToLocal();
-  showToast("Grid cleared", "#8f3a3a");
+  showToast(`${getLayoutConfig().toastLabel} cleared`, "#8f3a3a");
 }
 
 function resetGridOnly() {
@@ -402,8 +461,12 @@ function resetGridOnly() {
 
 function clearPoolAndGrid() {
   spritePool = [];
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
+  for (const mode of Object.keys(LAYOUT_MODES)) {
+    gridStates[mode] = createEmptyGrid(LAYOUT_MODES[mode].rows, LAYOUT_MODES[mode].cols);
+  }
+  gridData = getActiveGrid();
+  for (let r = 0; r < gridData.length; r++) {
+    for (let c = 0; c < gridData[r].length; c++) {
       gridData[r][c] = null;
     }
   }
@@ -416,7 +479,13 @@ function clearPoolAndGrid() {
 function saveToLocal() {
   try {
     const data = {
-      grid: gridData.map((row) => row.map((cell) => (cell ? { id: cell.id, src: cell.src } : null))),
+      activeLayoutMode,
+      grids: Object.fromEntries(
+        Object.entries(gridStates).map(([mode, grid]) => [
+          mode,
+          grid.map((row) => row.map((cell) => (cell ? { id: cell.id, src: cell.src } : null)))
+        ])
+      ),
       pool: spritePool.map((p) => ({
         id: p.id,
         src: p.src,
@@ -425,33 +494,45 @@ function saveToLocal() {
         baseName: p.baseName
       }))
     };
-    localStorage.setItem("rpg_sprite_forge_v2", JSON.stringify(data));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch (e) {
     console.warn("Save skipped", e);
   }
 }
 
 function loadFromLocal() {
-  const raw = localStorage.getItem("rpg_sprite_forge_v2");
+  const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
   if (!raw) return false;
   try {
     const saved = JSON.parse(raw);
-    if (saved.grid && saved.grid.length === ROWS) {
-      const newGrid = [];
-      for (let r = 0; r < ROWS; r++) {
-        const rowData = saved.grid[r];
-        if (rowData && rowData.length === COLS) {
-          newGrid.push(
-            rowData.map((cell) =>
-              cell && cell.src ? { id: cell.id || genId(), src: cell.src } : null
-            )
-          );
-        } else {
-          newGrid.push(Array(COLS).fill(null));
-        }
+    if (saved.grids && typeof saved.grids === "object") {
+      for (const [mode, grid] of Object.entries(saved.grids)) {
+        const config = LAYOUT_MODES[mode];
+        if (!config || !Array.isArray(grid) || grid.length !== config.rows) continue;
+        gridStates[mode] = grid.map((rowData) => {
+          if (!Array.isArray(rowData) || rowData.length !== config.cols) {
+            return Array(config.cols).fill(null);
+          }
+          return rowData.map((cell) => (cell && cell.src ? { id: cell.id || genId(), src: cell.src } : null));
+        });
       }
-      gridData = newGrid;
+    } else if (saved.grid && Array.isArray(saved.grid)) {
+      const matchedMode =
+        Object.entries(LAYOUT_MODES).find(([, config]) => saved.grid.length === config.rows && saved.grid[0]?.length === config.cols)?.[0] ||
+        activeLayoutMode;
+      const config = getLayoutConfig(matchedMode);
+      gridStates[matchedMode] = saved.grid.map((rowData) => {
+        if (!Array.isArray(rowData) || rowData.length !== config.cols) {
+          return Array(config.cols).fill(null);
+        }
+        return rowData.map((cell) => (cell && cell.src ? { id: cell.id || genId(), src: cell.src } : null));
+      });
     }
+
+    if (saved.activeLayoutMode && LAYOUT_MODES[saved.activeLayoutMode]) {
+      activeLayoutMode = saved.activeLayoutMode;
+    }
+    gridData = getActiveGrid();
     if (saved.pool && Array.isArray(saved.pool)) {
       spritePool = saved.pool
         .filter((p) => p && p.src)
@@ -463,8 +544,11 @@ function loadFromLocal() {
           baseName: p.baseName || getBaseFilename(p.originalName || p.name)
         }));
     }
+    updateModeSelect();
+    updateGridHeader();
     renderGrid();
     renderPool();
+    saveToLocal();
     return true;
   } catch (e) {
     return false;
@@ -484,6 +568,8 @@ function showToast(msg, bg) {
 
 function init() {
   loadFromLocal();
+  updateModeSelect();
+  updateGridHeader();
   renderGrid();
   renderPool();
 
@@ -497,6 +583,14 @@ function init() {
   document.getElementById("exportCleanPngBtn").addEventListener("click", exportCleanSpriteSheet);
   document.getElementById("exportLayoutBtn").addEventListener("click", exportLayoutJSON);
   document.getElementById("demoSpritesBtn").addEventListener("click", loadDemoSprites);
+
+  const layoutModeSelect = document.getElementById("layoutModeSelect");
+  layoutModeSelect.addEventListener("change", (e) => {
+    setActiveGrid(e.target.value);
+    updateGridHeader();
+    renderGrid();
+    saveToLocal();
+  });
 
   const jsonImport = document.getElementById("importLayoutJson");
   jsonImport.addEventListener("change", (e) => {

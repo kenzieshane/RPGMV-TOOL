@@ -60,21 +60,21 @@
         </div>
 
         <div class="rpg-panel-right">
-            <div class="rpg-panel-header">9x6 Placement Grid</div>
+            <div class="rpg-panel-header" id="gridPanelHeader">9x6 Placement Grid</div>
             <div class="rpg-panel-content">
+                <div class="rpg-mode-row">
+                    <label for="layoutModeSelect" class="rpg-export-label">Arrangement Mode</label>
+                    <select id="layoutModeSelect" class="rpg-export-select">
+                        <option value="full">Full Grid (9w x 6h)</option>
+                        <option value="walk3x4">Character Walk (3w x 4h)</option>
+                    </select>
+                </div>
                 <div id="rpgGridContainer" class="rpg-grid"></div>
 
                 <div class="rpg-actions">
                     <div class="form-row">
                         <button id="clearGridBtn" class="rpg-btn rpg-btn-danger">Clear Grid</button>
                         <button id="resetGridOnlyBtn" class="rpg-btn">Reset Grid</button>
-                    </div>
-                    <div class="rpg-export-settings">
-                        <label for="exportSizePreset" class="rpg-export-label">Export Size</label>
-                        <select id="exportSizePreset" class="rpg-export-select">
-                            <option value="full">Full Grid (9w x 6h)</option>
-                            <option value="walk3x4">Character Walk (3w x 4h)</option>
-                        </select>
                     </div>
                     <div>
                         <button id="exportCleanPngBtn" class="rpg-btn rpg-btn-primary">Export Transparent PNG</button>
