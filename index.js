@@ -238,8 +238,12 @@ async function exportCleanSpriteSheet() {
   const gridStyle = window.getComputedStyle(gridElem);
   const gap = parseInt(gridStyle.gap, 10) || 8;
 
-  const totalW = COLS * cellWidth + (COLS - 1) * gap;
-  const totalH = ROWS * cellHeight + (ROWS - 1) * gap;
+  const exportPreset = document.getElementById("exportSizePreset")?.value || "full";
+  const exportCols = exportPreset === "walk3x4" ? 3 : COLS;
+  const exportRows = exportPreset === "walk3x4" ? 4 : ROWS;
+
+  const totalW = exportCols * cellWidth + (exportCols - 1) * gap;
+  const totalH = exportRows * cellHeight + (exportRows - 1) * gap;
 
   const canvas = document.createElement("canvas");
   canvas.width = totalW;
@@ -248,8 +252,8 @@ async function exportCleanSpriteSheet() {
   ctx.clearRect(0, 0, totalW, totalH);
 
   const drawPromises = [];
-  for (let row = 0; row < ROWS; row++) {
-    for (let col = 0; col < COLS; col++) {
+  for (let row = 0; row < exportRows; row++) {
+    for (let col = 0; col < exportCols; col++) {
       const cellEntry = gridData[row][col];
       if (cellEntry && cellEntry.src) {
         const x = col * (cellWidth + gap);
@@ -285,12 +289,18 @@ async function exportCleanSpriteSheet() {
     }
   }
   await Promise.all(drawPromises);
+
   const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
   const link = document.createElement("a");
-  link.download = `rpg_sprite_sheet_${timestamp}.png`;
+  const exportLabel = exportPreset === "walk3x4" ? "walk_3x4" : "full_9x6";
+  link.download = `rpg_sprite_sheet_${exportLabel}_${timestamp}.png`;
   link.href = canvas.toDataURL("image/png");
   link.click();
-  showToast("Sprite sheet exported", "#2f8a68");
+  if (exportPreset === "walk3x4") {
+    showToast("Exported Character Walk 3x4 PNG", "#2f8a68");
+  } else {
+    showToast("Exported Full 9x6 PNG", "#2f8a68");
+  }
 }
 
 function exportLayoutJSON() {

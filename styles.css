@@ -663,6 +663,31 @@ input[type="file"] {
   flex-wrap: wrap;
 }
 
+.rpg-export-settings {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rpg-export-label {
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.rpg-export-select {
+  border: 1px solid #99b9c8;
+  background: #edf5f9;
+  color: #244a5b;
+  border-radius: var(--radius-sm);
+  min-height: 33px;
+  padding: 0 10px;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
 .link-button {
   display: inline-flex;
   align-items: center;
