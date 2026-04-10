@@ -9,6 +9,7 @@ const LAYOUT_MODES = {
 };
 const STORAGE_KEY = "rpg_sprite_forge_v3";
 const LEGACY_STORAGE_KEY = "rpg_sprite_forge_v2";
+const RPG_MV_WALK_FRAME_SIZE = 48;
 let activeLayoutMode = "full";
 let gridStates = Object.fromEntries(
   Object.entries(LAYOUT_MODES).map(([mode, config]) => [mode, createEmptyGrid(config.rows, config.cols)])
@@ -300,8 +301,12 @@ async function exportCleanSpriteSheet() {
   const { rows: exportRows, cols: exportCols } = getLayoutConfig();
   const exportPreset = activeLayoutMode;
 
-  const totalW = exportCols * cellWidth + (exportCols - 1) * gap;
-  const totalH = exportRows * cellHeight + (exportRows - 1) * gap;
+  const useMvWalkSheet = exportPreset === "walk3x4";
+  const exportCellWidth = useMvWalkSheet ? RPG_MV_WALK_FRAME_SIZE : cellWidth;
+  const exportCellHeight = useMvWalkSheet ? RPG_MV_WALK_FRAME_SIZE : cellHeight;
+  const exportGap = useMvWalkSheet ? 0 : gap;
+  const totalW = exportCols * exportCellWidth + (exportCols - 1) * exportGap;
+  const totalH = exportRows * exportCellHeight + (exportRows - 1) * exportGap;
 
   const canvas = document.createElement("canvas");
   canvas.width = totalW;
@@ -315,27 +320,27 @@ async function exportCleanSpriteSheet() {
     for (let col = 0; col < exportCols; col++) {
       const cellEntry = currentGrid[row][col];
       if (cellEntry && cellEntry.src) {
-        const x = col * (cellWidth + gap);
-        const y = row * (cellHeight + gap);
+        const x = col * (exportCellWidth + exportGap);
+        const y = row * (exportCellHeight + exportGap);
         const promise = new Promise((resolve) => {
           const img = new Image();
           img.onload = () => {
             const imgRatio = img.width / img.height;
-            const targetRatio = cellWidth / cellHeight;
+            const targetRatio = exportCellWidth / exportCellHeight;
             let drawW;
             let drawH;
             let offX;
             let offY;
             if (imgRatio > targetRatio) {
-              drawH = cellHeight;
-              drawW = img.width * (cellHeight / img.height);
-              offX = x + (cellWidth - drawW) / 2;
+              drawH = exportCellHeight;
+              drawW = img.width * (exportCellHeight / img.height);
+              offX = x + (exportCellWidth - drawW) / 2;
               offY = y;
             } else {
-              drawW = cellWidth;
-              drawH = img.height * (cellWidth / img.width);
+              drawW = exportCellWidth;
+              drawH = img.height * (exportCellWidth / img.width);
               offX = x;
-              offY = y + (cellHeight - drawH) / 2;
+              offY = y + (exportCellHeight - drawH) / 2;
             }
             ctx.drawImage(img, offX, offY, drawW, drawH);
             resolve();
@@ -355,7 +360,11 @@ async function exportCleanSpriteSheet() {
   link.download = `rpg_sprite_sheet_${exportLabel}_${timestamp}.png`;
   link.href = canvas.toDataURL("image/png");
   link.click();
-  showToast(`Exported ${getLayoutConfig().toastLabel}`, "#2f8a68");
+  if (useMvWalkSheet) {
+    showToast("Exported Character Walk 3x4 sheet (144x192)", "#2f8a68");
+  } else {
+    showToast(`Exported ${getLayoutConfig().toastLabel}`, "#2f8a68");
+  }
 }
 
 function exportLayoutJSON() {
