@@ -13,6 +13,14 @@ let dragStartY = 0;
 const canvas = document.getElementById("previewCanvas");
 const ctx = canvas.getContext("2d");
 
+function disableSmoothing(context) {
+  if (!context) return;
+  context.imageSmoothingEnabled = false;
+  context.mozImageSmoothingEnabled = false;
+  context.webkitImageSmoothingEnabled = false;
+  context.msImageSmoothingEnabled = false;
+}
+
 function genId() {
   return "sprite_" + Date.now() + "_" + Math.random().toString(36).substr(2, 8);
 }
@@ -197,6 +205,7 @@ function drawCheckerboard() {
 }
 
 function drawCanvas() {
+  disableSmoothing(ctx);
   ctx.save();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawCheckerboard();
@@ -251,6 +260,7 @@ function exportCurrentSprite() {
   outputCanvas.width = sprite.originalWidth;
   outputCanvas.height = sprite.originalHeight;
   const outputCtx = outputCanvas.getContext("2d");
+  disableSmoothing(outputCtx);
 
   outputCtx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
   outputCtx.drawImage(
@@ -285,6 +295,7 @@ function exportAllSprites() {
     outputCanvas.width = sprite.originalWidth;
     outputCanvas.height = sprite.originalHeight;
     const outputCtx = outputCanvas.getContext("2d");
+    disableSmoothing(outputCtx);
 
     outputCtx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
     outputCtx.drawImage(

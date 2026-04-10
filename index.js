@@ -10,12 +10,21 @@ const LAYOUT_MODES = {
 const STORAGE_KEY = "rpg_sprite_forge_v3";
 const LEGACY_STORAGE_KEY = "rpg_sprite_forge_v2";
 const RPG_MV_WALK_FRAME_SIZE = 48;
+const SPRITE_CELL_PADDING_PX = 3;
 let activeLayoutMode = "full";
 let gridStates = Object.fromEntries(
   Object.entries(LAYOUT_MODES).map(([mode, config]) => [mode, createEmptyGrid(config.rows, config.cols)])
 );
 let gridData = gridStates[activeLayoutMode];
 let spritePool = [];
+
+function disableSmoothing(context) {
+  if (!context) return;
+  context.imageSmoothingEnabled = false;
+  context.mozImageSmoothingEnabled = false;
+  context.webkitImageSmoothingEnabled = false;
+  context.msImageSmoothingEnabled = false;
+}
 
 function createEmptyGrid(rows, cols) {
   return Array(rows)
@@ -312,6 +321,7 @@ async function exportCleanSpriteSheet() {
   canvas.width = totalW;
   canvas.height = totalH;
   const ctx = canvas.getContext("2d");
+  disableSmoothing(ctx);
   ctx.clearRect(0, 0, totalW, totalH);
   const currentGrid = getActiveGrid();
 
@@ -325,22 +335,25 @@ async function exportCleanSpriteSheet() {
         const promise = new Promise((resolve) => {
           const img = new Image();
           img.onload = () => {
+            disableSmoothing(ctx);
             const imgRatio = img.width / img.height;
-            const targetRatio = exportCellWidth / exportCellHeight;
+            const innerWidth = Math.max(1, exportCellWidth - SPRITE_CELL_PADDING_PX * 2);
+            const innerHeight = Math.max(1, exportCellHeight - SPRITE_CELL_PADDING_PX * 2);
+            const targetRatio = innerWidth / innerHeight;
             let drawW;
             let drawH;
             let offX;
             let offY;
             if (imgRatio > targetRatio) {
-              drawH = exportCellHeight;
-              drawW = img.width * (exportCellHeight / img.height);
-              offX = x + (exportCellWidth - drawW) / 2;
-              offY = y;
+              drawH = innerHeight;
+              drawW = img.width * (innerHeight / img.height);
+              offX = x + SPRITE_CELL_PADDING_PX + (innerWidth - drawW) / 2;
+              offY = y + SPRITE_CELL_PADDING_PX;
             } else {
-              drawW = exportCellWidth;
-              drawH = img.height * (exportCellWidth / img.width);
-              offX = x;
-              offY = y + (exportCellHeight - drawH) / 2;
+              drawW = innerWidth;
+              drawH = img.height * (innerWidth / img.width);
+              offX = x + SPRITE_CELL_PADDING_PX;
+              offY = y + SPRITE_CELL_PADDING_PX + (innerHeight - drawH) / 2;
             }
             ctx.drawImage(img, offX, offY, drawW, drawH);
             resolve();
