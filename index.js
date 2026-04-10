@@ -5,6 +5,12 @@ const LAYOUT_MODES = {
     rows: 4,
     label: "3x4 Character Walk Grid",
     toastLabel: "Character Walk 3x4 layout"
+  },
+  sheet8: {
+    cols: 12,
+    rows: 8,
+    label: "8 Characters Sheet Grid (12x8)",
+    toastLabel: "RPG Maker 8-character sheet"
   }
 };
 const STORAGE_KEY = "rpg_sprite_forge_v3";
@@ -24,6 +30,10 @@ function disableSmoothing(context) {
   context.mozImageSmoothingEnabled = false;
   context.webkitImageSmoothingEnabled = false;
   context.msImageSmoothingEnabled = false;
+}
+
+function isRpgMakerFixedSheet(mode) {
+  return mode === "walk3x4" || mode === "sheet8";
 }
 
 function createEmptyGrid(rows, cols) {
@@ -310,10 +320,10 @@ async function exportCleanSpriteSheet() {
   const { rows: exportRows, cols: exportCols } = getLayoutConfig();
   const exportPreset = activeLayoutMode;
 
-  const useMvWalkSheet = exportPreset === "walk3x4";
-  const exportCellWidth = useMvWalkSheet ? RPG_MV_WALK_FRAME_SIZE : cellWidth;
-  const exportCellHeight = useMvWalkSheet ? RPG_MV_WALK_FRAME_SIZE : cellHeight;
-  const exportGap = useMvWalkSheet ? 0 : gap;
+  const useFixedRpgMakerSheet = isRpgMakerFixedSheet(exportPreset);
+  const exportCellWidth = useFixedRpgMakerSheet ? RPG_MV_WALK_FRAME_SIZE : cellWidth;
+  const exportCellHeight = useFixedRpgMakerSheet ? RPG_MV_WALK_FRAME_SIZE : cellHeight;
+  const exportGap = useFixedRpgMakerSheet ? 0 : gap;
   const totalW = exportCols * exportCellWidth + (exportCols - 1) * exportGap;
   const totalH = exportRows * exportCellHeight + (exportRows - 1) * exportGap;
 
@@ -369,12 +379,19 @@ async function exportCleanSpriteSheet() {
 
   const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
   const link = document.createElement("a");
-  const exportLabel = exportPreset === "walk3x4" ? "walk_3x4" : "full_9x6";
+  const exportLabel =
+    exportPreset === "walk3x4"
+      ? "walk_3x4"
+      : exportPreset === "sheet8"
+        ? "sheet_8char_12x8"
+        : "full_9x6";
   link.download = `rpg_sprite_sheet_${exportLabel}_${timestamp}.png`;
   link.href = canvas.toDataURL("image/png");
   link.click();
-  if (useMvWalkSheet) {
+  if (exportPreset === "walk3x4") {
     showToast("Exported Character Walk 3x4 sheet (144x192)", "#2f8a68");
+  } else if (exportPreset === "sheet8") {
+    showToast("Exported 8-character sheet (576x384)", "#2f8a68");
   } else {
     showToast(`Exported ${getLayoutConfig().toastLabel}`, "#2f8a68");
   }
