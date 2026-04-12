@@ -586,6 +586,12 @@ input[type="file"] {
   image-rendering: crisp-edges;
 }
 
+.rpg-grid.sheet8-mode .rpg-grid-cell img {
+  width: calc(100% - 10px);
+  height: calc(100% - 10px);
+  margin: 5px;
+}
+
 .rpg-grid-cell:hover .cell-remove {
   opacity: 1;
 }

@@ -88,6 +88,7 @@ function renderGrid() {
   if (!container) return;
   const { rows, cols } = getLayoutConfig();
   const currentGrid = getActiveGrid();
+  container.classList.toggle("sheet8-mode", activeLayoutMode === "sheet8");
   container.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
   container.style.gridTemplateRows = `repeat(${rows}, 72px)`;
   container.innerHTML = "";
