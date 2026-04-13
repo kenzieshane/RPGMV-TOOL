@@ -17,6 +17,8 @@ const STORAGE_KEY = "rpg_sprite_forge_v3";
 const LEGACY_STORAGE_KEY = "rpg_sprite_forge_v2";
 const RPG_MV_WALK_FRAME_SIZE = 48;
 const SPRITE_CELL_PADDING_PX = 3;
+const SHEET8_EXPORT_GAP_PX = 26;
+const SHEET8_TOP_ROW_OFFSET_PX = -6;
 let activeLayoutMode = "full";
 let gridStates = Object.fromEntries(
   Object.entries(LAYOUT_MODES).map(([mode, config]) => [mode, createEmptyGrid(config.rows, config.cols)])
@@ -88,7 +90,6 @@ function renderGrid() {
   if (!container) return;
   const { rows, cols } = getLayoutConfig();
   const currentGrid = getActiveGrid();
-  container.classList.toggle("sheet8-mode", activeLayoutMode === "sheet8");
   container.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
   container.style.gridTemplateRows = `repeat(${rows}, 72px)`;
   container.innerHTML = "";
@@ -97,9 +98,6 @@ function renderGrid() {
       const cellData = currentGrid[row][col];
       const cell = document.createElement("div");
       cell.className = "rpg-grid-cell";
-      if (row === 0) {
-        cell.classList.add("sheet8-top-row");
-      }
       cell.setAttribute("data-row", row);
       cell.setAttribute("data-col", col);
 
@@ -323,13 +321,15 @@ async function exportCleanSpriteSheet() {
 
   const { rows: exportRows, cols: exportCols } = getLayoutConfig();
   const exportPreset = activeLayoutMode;
+  const isSheet8Export = exportPreset === "sheet8";
 
   const useFixedRpgMakerSheet = isRpgMakerFixedSheet(exportPreset);
   const exportCellWidth = useFixedRpgMakerSheet ? RPG_MV_WALK_FRAME_SIZE : cellWidth;
   const exportCellHeight = useFixedRpgMakerSheet ? RPG_MV_WALK_FRAME_SIZE : cellHeight;
-  const exportGap = useFixedRpgMakerSheet ? 0 : gap;
+  const exportGap = isSheet8Export ? SHEET8_EXPORT_GAP_PX : useFixedRpgMakerSheet ? 0 : gap;
+  const topInset = isSheet8Export ? Math.abs(SHEET8_TOP_ROW_OFFSET_PX) : 0;
   const totalW = exportCols * exportCellWidth + (exportCols - 1) * exportGap;
-  const totalH = exportRows * exportCellHeight + (exportRows - 1) * exportGap;
+  const totalH = exportRows * exportCellHeight + (exportRows - 1) * exportGap + topInset;
 
   const canvas = document.createElement("canvas");
   canvas.width = totalW;
@@ -345,7 +345,7 @@ async function exportCleanSpriteSheet() {
       const cellEntry = currentGrid[row][col];
       if (cellEntry && cellEntry.src) {
         const x = col * (exportCellWidth + exportGap);
-        const y = row * (exportCellHeight + exportGap);
+        const y = row * (exportCellHeight + exportGap) + topInset;
         const promise = new Promise((resolve) => {
           const img = new Image();
           img.onload = () => {
@@ -353,6 +353,7 @@ async function exportCleanSpriteSheet() {
             const imgRatio = img.width / img.height;
             const innerWidth = Math.max(1, exportCellWidth - SPRITE_CELL_PADDING_PX * 2);
             const innerHeight = Math.max(1, exportCellHeight - SPRITE_CELL_PADDING_PX * 2);
+            const rowTopOffset = isSheet8Export && row === 0 ? SHEET8_TOP_ROW_OFFSET_PX : 0;
             const targetRatio = innerWidth / innerHeight;
             let drawW;
             let drawH;
@@ -362,12 +363,12 @@ async function exportCleanSpriteSheet() {
               drawH = innerHeight;
               drawW = img.width * (innerHeight / img.height);
               offX = x + SPRITE_CELL_PADDING_PX + (innerWidth - drawW) / 2;
-              offY = y + SPRITE_CELL_PADDING_PX;
+              offY = y + SPRITE_CELL_PADDING_PX + rowTopOffset;
             } else {
               drawW = innerWidth;
               drawH = img.height * (innerWidth / img.width);
               offX = x + SPRITE_CELL_PADDING_PX;
-              offY = y + SPRITE_CELL_PADDING_PX + (innerHeight - drawH) / 2;
+              offY = y + SPRITE_CELL_PADDING_PX + (innerHeight - drawH) / 2 + rowTopOffset;
             }
             ctx.drawImage(img, offX, offY, drawW, drawH);
             resolve();
@@ -405,7 +406,7 @@ function exportLayoutJSON() {
   const { rows, cols } = getLayoutConfig();
   const currentGrid = getActiveGrid();
   const exportObj = {
-    version: "1.0.3",
+    version: "1.0.4",
     theme: "RPG Maker MV Sprite Forge",
     mode: activeLayoutMode,
     dimensions: { rows, cols },
