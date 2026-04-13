@@ -97,6 +97,9 @@ function renderGrid() {
       const cellData = currentGrid[row][col];
       const cell = document.createElement("div");
       cell.className = "rpg-grid-cell";
+      if (row === 0) {
+        cell.classList.add("sheet8-top-row");
+      }
       cell.setAttribute("data-row", row);
       cell.setAttribute("data-col", col);
 
