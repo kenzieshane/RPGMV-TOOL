@@ -180,6 +180,7 @@ python -m http.server 8080
 
 ## 📝 Version History
 
+- v1.0.2: Added sheet8 top-row negative offset and increased sheet8 spacing between cells.
 - v1.0.1: Added a visible footer version indicator and bumped exported layout metadata.
 
 ---

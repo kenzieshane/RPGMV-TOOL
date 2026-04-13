@@ -1,6 +1,6 @@
 (function () {
   const PRIVACY_POLICY_URL = "https://blog.kenzieshane.my.id/2025/11/about-us.html";
-  const APP_VERSION = "v1.0.1";
+  const APP_VERSION = "v1.0.2";
 
   function renderFooter(host) {
     const year = new Date().getFullYear();
