@@ -376,6 +376,18 @@ body {
   letter-spacing: 0.03em;
 }
 
+.footer-version {
+  color: #244a5b;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 4px 8px;
+  border: 1px solid #afc1cd;
+  background: #f4f8fb;
+  border-radius: var(--radius-sm);
+}
+
 .rpg-header,
 .tool-header {
   margin-bottom: 22px;
@@ -588,6 +600,7 @@ input[type="file"] {
 
 .rpg-grid.sheet8-mode {
   gap: 16px;
+  padding-top: 0;
 }
 
 .rpg-grid.sheet8-mode .rpg-grid-cell img {

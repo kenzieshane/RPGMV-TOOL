@@ -180,7 +180,7 @@ python -m http.server 8080
 
 ## 📝 Version History
 
-IDK IM TOO LAZY TO ACTUALLY DO IT
+- v1.0.1: Added a visible footer version indicator and bumped exported layout metadata.
 
 ---
 
