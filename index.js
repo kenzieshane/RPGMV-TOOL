@@ -405,7 +405,7 @@ function exportLayoutJSON() {
   const { rows, cols } = getLayoutConfig();
   const currentGrid = getActiveGrid();
   const exportObj = {
-    version: "1.0.2",
+    version: "1.0.3",
     theme: "RPG Maker MV Sprite Forge",
     mode: activeLayoutMode,
     dimensions: { rows, cols },
