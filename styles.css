@@ -590,6 +590,10 @@ input[type="file"] {
   gap: 16px;
 }
 
+.rpg-grid.sheet8-mode .rpg-grid-cell img {
+  margin-top: 0;
+}
+
 .rpg-grid-cell:hover .cell-remove {
   opacity: 1;
 }
